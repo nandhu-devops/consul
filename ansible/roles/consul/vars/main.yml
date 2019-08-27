@@ -1,0 +1,5 @@
+---
+
+HOST_COUNT: "{{ groups['war'] | length }}"
+#consul_key: "{{'consul_key.stdout_lines | join("\",\"")'}}"
+config_file: "{{'/home/ubuntu/etc/ansible/roles/consul/templates/config.json'}}"

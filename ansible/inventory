@@ -1,0 +1,12 @@
+[leader]
+consul1 ansible_ssh_user=ansible ansible_ssh_host=ansible@10.0.0.247 ansible_ssh_pass=1
+consul2 ansible_ssh_user=ansible ansible_ssh_host=ansible@10.0.0.224 ansible_ssh_pass=1
+consul3 ansible_ssh_user=ansible ansible_ssh_host=ansible@10.0.0.76 ansible_ssh_pass=1
+
+[war:children]
+leader
+[all:children]
+war
+
+
+

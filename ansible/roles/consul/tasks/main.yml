@@ -1,0 +1,76 @@
+---
+          - name: download consul zip file
+            get_url:
+                    url: https://releases.hashicorp.com/consul/1.2.2/consul_1.2.2_linux_amd64.zip
+                    dest: /usr/local/bin/
+          - name: Install dependencies
+            package:
+                    name: "{{ item }}"
+                    state: latest
+            with_items:
+                    - unzip
+          - name: unzip the file
+            unarchive:
+                    src: /usr/local/bin/consul_1.2.2_linux_amd64.zip
+                    dest: /usr/local/bin/
+                    remote_src: yes
+
+          - name: create folder for data dir
+            file:
+                    path: /var/consul
+                    state: directory
+                    mode: '0777'
+          - name: create folder for config file
+            file:
+                    path: "{{item.dest}}"
+                    state: directory
+                    mode: '{{item.mode}}'
+            with_items:
+                    - { dest: '/etc/consul.d', mode: '0777'}
+                    - { dest: '/etc/consul.d/scripts', mode: '0777'}
+    
+          - name: remove the zip file
+            file:
+                    path: /usr/local/bin/consul_1.2.2_linux_amd64.zip
+                    state: absent
+
+
+          - debug:
+                 msg: "{{ inventory_hostname }}"
+          - debug:
+                  msg: "{{ groups['war'] }}"
+
+          - name: generate consul key in consul1
+            when: inventory_hostname == 'consul1'
+            shell: "consul keygen"
+            register: consul_key
+          - debug:
+                  msg: " {{ consul_key }}"
+          - name: create a dummy host
+            add_host:
+                    name: "dummy"
+                    dummy_var: "{{ consul_key.stdout }}"
+          #- debug:
+          #        msg: "{{ dummy_var }}"
+          - name: configure bootstrap and add consul key in config
+            template:
+                    src: config.json
+                    dest: /etc/consul.d/
+          - debug:
+                  msg: "{{ inventory_hostname }}"
+         
+
+          - name: service file for consul
+            template:
+                    src: consul.service
+                    dest: /etc/systemd/system/
+          - name: restart service for daemon-reload to pick up config changes
+            systemd:
+                    #state: restarted
+                    daemon_reload: yes
+          - name: Make sure a service is running
+            systemd:
+                    name: consul
+                    state: started
+
+
